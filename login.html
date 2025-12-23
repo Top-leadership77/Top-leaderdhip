@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>القيادات العليا 🔱 | Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Font -->
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:'Cairo',sans-serif;
+  background:linear-gradient(135deg,#050505,#0c1220);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
+.container{
+  background:#0f172a;
+  padding:30px;
+  border-radius:16px;
+  width:100%;
+  max-width:380px;
+  box-shadow:0 0 30px rgba(255,215,0,.15);
+}
+.logo{
+  text-align:center;
+  font-size:40px;
+  color:gold;
+}
+h2{text-align:center;margin:10px 0}
+input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:none;
+  border-radius:10px;
+  background:#020617;
+  color:#fff;
+}
+.password-box{position:relative}
+.eye{
+  position:absolute;
+  right:15px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+}
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  background:gold;
+  border:none;
+  border-radius:12px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.switch{
+  text-align:center;
+  margin-top:10px;
+  cursor:pointer;
+  color:#93c5fd;
+}
+.lang{
+  text-align:center;
+  margin-top:15px;
+}
+.lang button{
+  width:auto;
+  margin:0 5px;
+  padding:5px 12px;
+  background:#1e293b;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="logo">🔱</div>
+  <h2 id="title">تسجيل الدخول</h2>
+
+  <input id="username" placeholder="اسم المستخدم">
+  <input id="email" placeholder="البريد الإلكتروني">
+
+  <div class="password-box">
+    <input id="password" type="password" placeholder="كلمة السر">
+    <span class="eye" onclick="togglePass()">👁️</span>
+  </div>
+
+  <button onclick="login()" id="btn">دخول</button>
+
+  <div class="switch" onclick="toggleMode()" id="switch">
+    إنشاء حساب جديد
+  </div>
+
+  <div class="lang">
+    <button onclick="setLang('ar')">AR</button>
+    <button onclick="setLang('en')">EN</button>
+  </div>
+</div>
+
+<script>
+/* Firebase */
+firebase.initializeApp({
+  apiKey: "API_KEY",
+  authDomain: "PROJECT.firebaseapp.com",
+  projectId: "PROJECT_ID"
+});
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* State */
+let isLogin = true;
+let lang = "ar";
+
+/* Toggle Password */
+function togglePass(){
+  const p = document.getElementById("password");
+  p.type = p.type === "password" ? "text" : "password";
+}
+
+/* Login / Register */
+function login(){
+  const email = email.value;
+  const pass = password.value;
+  const user = username.value;
+
+  if(isLogin){
+    auth.signInWithEmailAndPassword(email,pass)
+    .then(()=>location.href="chat.html")
+    .catch(e=>alert(e.message));
+  }else{
+    auth.createUserWithEmailAndPassword(email,pass)
+    .then(cred=>{
+      db.collection("users").doc(cred.user.uid).set({
+        username:user,
+        role:"user",
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      location.href="chat.html";
+    })
+    .catch(e=>alert(e.message));
+  }
+}
+
+/* Switch Mode */
+function toggleMode(){
+  isLogin=!isLogin;
+  document.getElementById("title").innerText = isLogin ? t.login : t.register;
+  document.getElementById("btn").innerText = isLogin ? t.loginBtn : t.registerBtn;
+  document.getElementById("switch").innerText = isLogin ? t.switchToRegister : t.switchToLogin;
+}
+
+/* Language */
+const texts={
+  ar:{
+    login:"تسجيل الدخول",
+    register:"إنشاء حساب",
+    loginBtn:"دخول",
+    registerBtn:"تسجيل",
+    switchToRegister:"إنشاء حساب جديد",
+    switchToLogin:"لديك حساب؟ تسجيل الدخول"
+  },
+  en:{
+    login:"Login",
+    register:"Register",
+    loginBtn:"Login",
+    registerBtn:"Register",
+    switchToRegister:"Create new account",
+    switchToLogin:"Already have an account?"
+  }
+};
+let t=texts.ar;
+function setLang(l){
+  lang=l;
+  t=texts[l];
+  document.documentElement.dir = l==="ar"?"rtl":"ltr";
+  toggleMode(); toggleMode();
+}
+</script>
+
+</body>
+</html>
