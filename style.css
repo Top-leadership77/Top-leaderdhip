@@ -1,0 +1,6 @@
+body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f5f7fa; }
+.login-container, .chat-container { max-width:400px; margin:50px auto; padding:20px; background:#fff; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.1); text-align:center; }
+.login-container input, .chat-container input { width:80%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #ccc; }
+.login-container button, .chat-container button { padding:10px 20px; border:none; border-radius:8px; background:#0a5cff; color:#fff; cursor:pointer; }
+#chat-box { height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px; margin-bottom:10px; text-align:left; }
+.chat-msg { margin-bottom:6px; }
