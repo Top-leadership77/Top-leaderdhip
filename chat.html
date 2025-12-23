@@ -1,182 +1,54 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-<meta charset="UTF-8">
-<title>القيادات العليا 🔱 | Chat</title>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-
+<title>🔱 القيادات العليا - Chat</title>
+<link rel="stylesheet" href="style.css">
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
-<style>
-body{
-  margin:0;
-  font-family:'Cairo',sans-serif;
-  background:#020617;
-  color:#fff;
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-}
-header{
-  background:linear-gradient(90deg,#000,#1e293b);
-  padding:12px;
-  text-align:center;
-  font-size:20px;
-  font-weight:700;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-header span{color:gold;font-size:26px}
-header button{
-  background:#ef4444;
-  border:none;
-  color:#fff;
-  padding:6px 10px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-#messages{
-  flex:1;
-  padding:10px;
-  overflow-y:auto;
-}
-.msg{
-  background:#0f172a;
-  padding:10px;
-  margin-bottom:8px;
-  border-radius:12px;
-}
-.msg .name{color:gold;font-weight:bold}
-.msg .time{font-size:11px;color:#94a3b8}
-
-footer{
-  display:flex;
-  padding:10px;
-  gap:8px;
-  background:#020617;
-}
-footer input{
-  flex:1;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  background:#0f172a;
-  color:#fff;
-}
-footer button{
-  padding:10px 15px;
-  border:none;
-  border-radius:10px;
-  background:gold;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.lang{
-  position:fixed;
-  bottom:80px;
-  right:10px;
-}
-.lang button{
-  background:#1e293b;
-  color:#fff;
-  border:none;
-  margin:2px;
-  padding:5px 8px;
-  border-radius:6px;
-}
-</style>
+<script src="firebase-config.js"></script>
 </head>
-
 <body>
 
-<header>
-  <button onclick="logout()">⏻</button>
-  <div>القيادات العليا <span>🔱</span></div>
-  <div></div>
-</header>
-
-<div id="messages"></div>
-
-<footer>
-  <input id="msg" placeholder="اكتب رسالتك...">
-  <button onclick="send()">إرسال</button>
-</footer>
-
-<div class="lang">
-  <button onclick="setLang('ar')">AR</button>
-  <button onclick="setLang('en')">EN</button>
+<div class="chat-container">
+  <h1>غرفة الدردشة 🔱</h1>
+  <div id="chat-box"></div>
+  <form id="chat-form">
+    <input type="text" id="message" placeholder="اكتب رسالتك / Type message..." required>
+    <button type="submit">إرسال / Send</button>
+  </form>
 </div>
 
 <script>
-// Firebase
-firebase.initializeApp({
-  apiKey: "API_KEY",
-  authDomain: "PROJECT.firebaseapp.com",
-  projectId: "PROJECT_ID"
-});
+const chatBox = document.getElementById('chat-box');
+const chatForm = document.getElementById('chat-form');
+const username = localStorage.getItem('animeUser') || 'زائر / Guest';
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-let username = "مستخدم";
-
-// Auth Check
-auth.onAuthStateChanged(user=>{
-  if(!user) location.href="login.html";
-  else{
-    db.collection("users").doc(user.uid).get().then(d=>{
-      if(d.exists) username=d.data().username;
-    });
-  }
-});
-
-// Messages Listener
-db.collection("messages")
-.orderBy("time")
-.onSnapshot(snap=>{
-  const box=document.getElementById("messages");
-  box.innerHTML="";
-  snap.forEach(doc=>{
-    const d=doc.data();
-    box.innerHTML+=`
-      <div class="msg">
-        <div class="name">${d.user}</div>
-        <div>${d.text}</div>
-        <div class="time">${new Date(d.time?.seconds*1000).toLocaleTimeString()}</div>
-      </div>`;
+chatForm.onsubmit = e => {
+  e.preventDefault();
+  const msg = document.getElementById('message').value.trim();
+  if(!msg) return;
+  db.collection("chat").add({
+    user: username,
+    message: msg,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
-  box.scrollTop=box.scrollHeight;
-});
+  chatForm.reset();
+};
 
-// Send Message
-function send(){
-  const text=msg.value.trim();
-  if(!text) return;
-  db.collection("messages").add({
-    user:username,
-    text:text,
-    time:firebase.firestore.FieldValue.serverTimestamp()
+// Load messages in real-time
+db.collection("chat").orderBy("createdAt").onSnapshot(snapshot=>{
+  chatBox.innerHTML = "";
+  snapshot.forEach(doc=>{
+    const d = doc.data();
+    const div = document.createElement("div");
+    div.className = "chat-msg";
+    div.textContent = `${d.user}: ${d.message}`;
+    chatBox.appendChild(div);
   });
-  msg.value="";
-}
-
-// Logout
-function logout(){
-  auth.signOut().then(()=>location.href="login.html");
-}
-
-// Language
-function setLang(l){
-  document.documentElement.dir = l==="ar"?"rtl":"ltr";
-  msg.placeholder = l==="ar"?"اكتب رسالتك...":"Type your message...";
-}
+  chatBox.scrollTop = chatBox.scrollHeight;
+});
 </script>
 
 </body>
